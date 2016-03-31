@@ -1,0 +1,28 @@
+#!/bin/bash
+# Find all files created yesterday by each user
+for i in $(find /store -mindepth 2 -maxdepth 2)
+do
+  x=$(echo $i | sed 's?/store/??' | sed 's?/..*$??')
+  if [ ${#x} -eq 1 ]
+  then
+    find $i/drive_* -daystart -mtime -2  -mtime +0 -type f ! \( -name 'temp_ftp*' -o -name '*.temp_ftp' \) -ls |
+    awk '{s += $7}
+    END {printf("%s %d\n", user, s)}' user=$i
+  fi
+done | sort >/tmp/a.$$
+# Get the total bytes stored for each user
+for i in $(find /store -mindepth 2 -maxdepth 2)
+do
+  find $i/drive_* -daystart  -type f ! \( -name '*.temp_ftp' -o -name 'temp_ftp*' \) -ls |
+  awk '{s += $7}
+  END {printf("%s %d\n", user, s)}' user=$i
+done | sort >/tmp/b.$$
+# Join the results and report
+join /tmp/a.$$ /tmp/b.$$ |
+awk '{if (NR == 1) printf ("User   Today is %11s    Bytes Transferred Yesterday    Total Bytes Stored\n",date)}
+           {split($1,name,"/")
+            system("/usr/local/smd/bytes " name[4] " " $3)
+            printf("%-32s %15d                 %15d\n", name[4], $2, $3)}' date=$(date +\%C\%y/\%b/\%d) > /home/log/usage/usage_report.$(date --date=yesterday +%C%y%b%d)
+# clean up
+rm  /tmp/a.$$ /tmp/b.$$
+

@@ -1,0 +1,50 @@
+#!/bin/bash
+# Look in /store/s/sureback007 for files with suffix of .ins
+if cd /store/s/sureback007
+then
+  for name in $(find . -name "*.ins")
+  do
+  echo $name
+  # remove DOS trailing CRs
+    sed 's///g' $name > /tmp/$$.ins
+    mv /tmp/$$.ins $name
+    awk '{type  = substr($0, 1, index($0, ",") -1)
+  printf("READ: |%s|\n", $0);
+  print "type =:", type;
+          if (type == "0") {
+            file = substr($0, index($0, ",") +1);
+# prevent paths that attempt to go above /store/s/sureback007
+            if (0 == index(file, "/../")) { 
+              chattr_file=sprintf("chattr -i  %s\n", file);
+              system(chattr_file);
+  print chattr_file;
+              rm_file = sprintf("rm %s\n", file);
+              system(rm_file);
+  print rm_file;
+            } else {
+              print "Invalid path: "$0;
+            }               
+          } 
+          if (type == "1") {
+            split($0, token, ",");
+            update = sprintf("/usr/local/smd/sb007 %s %s %s\n", token[2], token[3], token[4]);
+            system(update);
+  print update;
+          }
+#          if (type == "2") {
+#            file = substr($0, index($0, ",") +1);
+#            chattr_file=sprintf("chattr -iR  %s\n", file);
+#  print chattr_file;
+#            rm_file = sprintf("rm -fr %s\n", file);
+#         }
+#         if (type != "0" && type != "1" && type != "2") {
+          if (type != "0" && type != "1") {
+            print "Invalid format: "$0;
+          }
+        }' $name
+  rm $name
+  done
+else
+  echo cd /store/s/sureback007 failed
+  exit 1
+fi

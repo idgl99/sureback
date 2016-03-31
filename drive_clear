@@ -1,0 +1,8 @@
+#!/bin/bash
+if  ls $1/drive_dot_*  2>/dev/null 
+then
+  for dir in $1/drive_dot_*
+   do
+    mv $dir $(echo $dir | sed 's/drive/clear/').$PPID
+   done
+fi

@@ -1,0 +1,40 @@
+#!/bin/bash
+
+PATH=$PATH:/usr/local/bin/
+
+# 
+# Create Chrooted User Account
+#
+
+if [ $# -lt 2 ]; then
+        echo "Usage: $0 USERNAME HOMEDIR"
+        exit 1;
+fi
+
+USERNAME=$1
+HOMEDIR=$2
+
+echo mkjailenv
+mkjailenv $HOMEDIR
+echo addjailsw
+addjailsw $HOMEDIR
+addjailsw $HOMEDIR -P bash
+addjailsw $HOMEDIR -P clear
+addjailsw $HOMEDIR -P groups
+addjailsw $HOMEDIR -P scp
+addjailsw $HOMEDIR -P getent
+addjailsw $HOMEDIR -P stat
+addjailsw $HOMEDIR -P gzip 
+addjailsw $HOMEDIR -P rsync
+addjailsw $HOMEDIR -P ssh 
+echo addjailuser
+addjailuser $HOMEDIR / /bin/bash $USERNAME
+
+# Create SFTP Subsystem
+
+WORK_PATH="usr/libexec/openssh"
+
+mkdir -p $HOMEDIR/$WORK_PATH
+cp -r /$WORK_PATH/sftp-server $HOMEDIR/$WORK_PATH/
+
+clear

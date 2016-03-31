@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+# script to create a file tree for each user after a backup has been taken
+# the existence of a file gentree in the users home directory indicates
+# that a backup has been taken
+#                                          Doug Laing     May 2007
+#
+# Also make all the files immutable (disabled)              Jan 2008
+#
+#
+# Check script in use
+#
+LockFile=/tmp/$(basename $0).lck
+echo $$ >> $LockFile
+while read Pid
+do
+   [ "$Pid" -eq $$ ] && break
+   [ -z "$(ps -p $Pid -opid=)" ] && continue
+   echo "Script in use (by pid $Pid), exiting..."
+   exit
+done < $LockFile
+trap "rm $LockFile" EXIT
+
+for i in a b c d e f g h i j k l m n o p q r s t u v w x y z
+do
+  for home_dir in $(find /store/$i -maxdepth 1 -mindepth 1 2>/dev/null)
+  do
+    cd $home_dir/tmp
+    if [ -f gentree ]
+    then
+      rm gentree
+      find $home_dir/drive_* -type f -print0 |
+         xargs -0 ls -ln |
+         awk '{print $9",",$5}' |
+         LC_ALL=C sort |
+         tee filetree |
+         awk 'BEGIN {FS=","} {print "\""$1"\""}' |
+         xargs chattr -i 2>/dev/null
+      rm filetree.zip
+      for file in $(grep '\/temp_ftp[^,]*' filetree | sed 's/,.*//')
+      do
+        rm $file 
+      done
+      grep -v '\/temp_ftp.*' filetree > filetree.$$
+      mv filetree.$$ filetree
+      zip -l filetree filetree >/dev/null 2>/dev/null
+      rm filetree 
+    fi
+  done
+done
