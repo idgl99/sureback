@@ -1,0 +1,32 @@
+The problem comes up when you try to access two or more GitHub repositories
+from the same server.  This is because you can only use an SSH key once as a
+deploy key. A workaround for this problem is to create a dedicated GitHub user
+just for the build but this is not very clean. It would be much cooler to use
+deploy keys. Some time ago, a colleague of mine, Ian Bull, came up with a
+solution for our build server.
+
+The idea is to create an SSH key pair for every private GitHub repository.
+You can create a key pair using this command on a Linux machine:
+
+ssh-keygen -t rsa -f ~/.ssh/id_rsa.REPONAME
+
+The prompt will ask for a password, however, setting a password in this case
+is not recommended. When the keys are accessed, there is no user logged onto
+the build machine to type the password ;). After creating the key pair the
+public key can be found in ~/.ssh/id_rsa.REPONAME.pub. This is the key that
+acts as the deploy key for a repo on GitHub. When using multiple SSH keys,
+the build server needs to know which one it should use when accessing
+github.com. To solve this we have to edit the SSH config in ~/.ssh/config and
+add an entry like this:
+
+Host github-REPONAME
+  HostName github.com
+  User git
+  IdentityFile /home/build/.ssh/id_rsa.REPONAME
+
+With this entry we are telling SSH to use the id_rsa.REPONAME key when
+accessing github.com with the hostname github-REPONAME. This gives us the
+ability to create a hostname accociated with its dedicated deploy key for
+every private GitHub repository. The last thing we have to do now is to access
+the private GitHub repository with the new hostname from the build server
+e.g. in a Jenkins job.
